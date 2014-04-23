@@ -1,17 +1,17 @@
 package com.takipi.tests.counters.implementations;
 
+import com.takipi.tests.counters.Counter;
+
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import com.takipi.tests.counters.Counter;
-
 public class RWLock implements Counter
 {
-	private ReadWriteLock rwlock = new ReentrantReadWriteLock();
+	private ReadWriteLock rwLock = new ReentrantReadWriteLock();
 	
-	private Lock rlock = rwlock.readLock();
-	private Lock wlock = rwlock.writeLock();
+	private Lock rLock = rwLock.readLock();
+	private Lock wLock = rwLock.writeLock();
 	
 	private long counter;
 	
@@ -19,12 +19,12 @@ public class RWLock implements Counter
 	{
 		try
 		{
-			rlock.lock();		
+			rLock.lock();
 			return counter;
 		}
 		finally
 		{
-			rlock.unlock();
+			rLock.unlock();
 		}
 	}
 	
@@ -32,12 +32,12 @@ public class RWLock implements Counter
 	{
 		try
 		{
-			wlock.lock();		
+			wLock.lock();
 			++counter;
 		}
 		finally
 		{
-			wlock.unlock();
+			wLock.unlock();
 		}
 	}
 }

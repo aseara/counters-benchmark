@@ -1,15 +1,10 @@
 package com.takipi.tests.counters;
 
+import com.takipi.tests.counters.implementations.*;
+
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-
-import com.takipi.tests.counters.implementations.Adder;
-import com.takipi.tests.counters.implementations.Atomic;
-import com.takipi.tests.counters.implementations.Dirty;
-import com.takipi.tests.counters.implementations.RWLock;
-import com.takipi.tests.counters.implementations.Synchronized;
-import com.takipi.tests.counters.implementations.Volatile;
 
 public class Main
 {
@@ -35,49 +30,53 @@ public class Main
 		ADDER
 	}
 	
-	public static void main(String[] args)
-	{
-		COUNTER = Counters.DIRTY.toString();
-		
-		if (args.length > 0)
-		{
-			COUNTER = args[0];
-		}
-		
-		if (args.length > 1)
-		{
-			THREADS = Integer.valueOf(args[1]);
-		}
-		
-		if (args.length > 2)
-		{
-			ROUNDS = Integer.valueOf(args[2]);
-		}
-		
-		if (args.length > 3)
-		{
-			TARGET_NUMBER = Long.valueOf(args[3]);
-		}
+	public static void main(String[] args) {
+		COUNTER = Counters.ADDER.toString();
 		
 		rounds = new Boolean[ROUNDS];
 		
 		System.out.println("Using " + COUNTER + ". threads: " + THREADS + ". rounds: " + ROUNDS +
 				". Target: " + TARGET_NUMBER);
 		
-		for (round = 0; round < ROUNDS; round++)
-		{
+		for (round = 0; round < ROUNDS; round++) {
 			rounds[round] = Boolean.FALSE;
 			
-			Counter counter = getCounter();
+			final Counter counter = getCounter();
 			
 			es = Executors.newFixedThreadPool(THREADS);
 			
 			start = System.currentTimeMillis();
 			
-			for (int j = 0; j < THREADS; j+=2)
-			{	
-				es.execute(new Reader(counter));
-				es.execute(new Writer(counter));
+			for (int j = 0; j < THREADS; j+=2) {
+                // counter reade thread
+				es.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (true) {
+                            if (Thread.interrupted())
+                                break;
+
+                            long count = counter.getCounter();
+
+                            if (count > Main.TARGET_NUMBER) {
+                                publish(System.currentTimeMillis());
+                                break;
+                            }
+                        }
+                    }
+                });
+                // counter write thread
+				es.execute(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (true) {
+                            if (Thread.interrupted())
+                                break;
+
+                            counter.increment();
+                        }
+                    }
+                });
 			}
 			
 			try
